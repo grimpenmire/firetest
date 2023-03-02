@@ -33,7 +33,12 @@ func runTest(
 func main() {
 	fmt.Println("Firetest v0.1.0")
 
-	tests, err := testcase.ReadTestSuiteFile("tests.json")
+	testFile := "tests.json"
+	if len(os.Args) > 1 {
+		testFile = os.Args[1]
+	}
+
+	tests, err := testcase.ReadTestSuiteFile(testFile)
 	if err != nil {
 		fmt.Printf("Error reading test suite: %s\n", err)
 		os.Exit(1)
