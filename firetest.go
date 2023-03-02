@@ -5,6 +5,7 @@ import (
 	"firetest/testcase"
 	"fmt"
 	"os"
+	"time"
 )
 
 type TestResultPair struct {
@@ -12,8 +13,20 @@ type TestResultPair struct {
 	result testcase.TestResult
 }
 
-func runTest(test testcase.TestCase, resultChan chan TestResultPair) {
-	result := test.Run(context.Background())
+type TestCaseSettings struct {
+	timeout time.Duration
+}
+
+func runTest(
+	ctx context.Context,
+	test testcase.TestCase,
+	settings TestCaseSettings,
+	resultChan chan TestResultPair,
+) {
+	ctx, cancelFunc := context.WithTimeout(ctx, settings.timeout)
+	defer cancelFunc()
+
+	result := test.Run(ctx)
 	resultChan <- TestResultPair{test: test, result: result}
 }
 
@@ -31,8 +44,11 @@ func main() {
 	resultChan := make(chan TestResultPair)
 
 	for i, test := range tests {
+		settings := TestCaseSettings{
+			timeout: 10 * time.Second,
+		}
 		fmt.Printf("Running Test %d: %s\n", i, test.String())
-		go runTest(test, resultChan)
+		go runTest(context.Background(), test, settings, resultChan)
 	}
 
 	for range tests {
