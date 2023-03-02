@@ -1,0 +1,14 @@
+{
+    "tests": [
+        {
+            "name": "twitter-dns",
+            "type": "dns",
+            "host": "twitter.com"
+        },
+        {
+            "name": "twitter-http",
+            "type": "http",
+            "url": "https://twitter.com"
+        }
+    ]
+}
