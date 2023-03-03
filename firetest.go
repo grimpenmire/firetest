@@ -60,7 +60,7 @@ func main() {
 		resultPair := <-resultChan
 		fmt.Printf("Finished Test %s: ", resultPair.test.String())
 		if resultPair.result.Success {
-			fmt.Println("Success.")
+			fmt.Println("Success")
 		} else {
 			fmt.Printf("Failed (%s): %s\n",
 				resultPair.result.FailReason,
