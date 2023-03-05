@@ -2,15 +2,16 @@ package testcase
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
+
+	"github.com/mitchellh/mapstructure"
 )
 
 type HttpTest struct {
-	name               string
-	url                string
-	expectedStatusCode int
+	Name               string
+	Url                string
+	ExpectedStatusCode int
 	client             http.Client
 }
 
@@ -21,35 +22,21 @@ func init() {
 func parseHttpTestCase(name string, values map[string]interface{}) (TestCase, error) {
 	var testCase HttpTest
 
-	testCase.name = name
+	testCase.Name = name
 
-	url, ok := values["url"]
-	if !ok {
-		return nil, errors.New("url key not present in HTTP test case.")
+	// default value
+	testCase.ExpectedStatusCode = 200
+
+	err := mapstructure.Decode(values, &testCase)
+	if err != nil {
+		return nil, err
 	}
-
-	testCase.url, ok = url.(string)
-	if !ok {
-		return nil, errors.New("url value for HTTP test case is not a string")
-	}
-
-	expectedStatusCode, ok := values["expected_status_code"]
-	if ok {
-		testCase.expectedStatusCode, ok = expectedStatusCode.(int)
-		if !ok {
-			return nil, errors.New("expected_status_code is not an integer")
-		}
-	} else {
-		testCase.expectedStatusCode = 200
-	}
-
-	testCase.client = *http.DefaultClient
 
 	return &testCase, nil
 }
 
 func (m *HttpTest) GetName() string {
-	return m.name
+	return m.Name
 }
 
 func (m *HttpTest) GetType() string {
@@ -57,11 +44,11 @@ func (m *HttpTest) GetType() string {
 }
 
 func (m *HttpTest) String() string {
-	return fmt.Sprintf("http:%s:url=%s", m.name, m.url)
+	return fmt.Sprintf("http:%s:url=%s", m.Name, m.Url)
 }
 
 func (m *HttpTest) Run(ctx context.Context) TestResult {
-	req, err := http.NewRequest("GET", m.url, nil)
+	req, err := http.NewRequest("GET", m.Url, nil)
 	if err != nil {
 		return TestResult{
 			Success:    false,
@@ -81,12 +68,12 @@ func (m *HttpTest) Run(ctx context.Context) TestResult {
 		}
 	}
 
-	if res.StatusCode != m.expectedStatusCode {
+	if res.StatusCode != m.ExpectedStatusCode {
 		return TestResult{
 			Success:    false,
 			FailReason: "HTTP_REQ_FAILED",
 			FailDesc: fmt.Sprintf("Bad status code: expected %d, got %d",
-				m.expectedStatusCode, res.StatusCode),
+				m.ExpectedStatusCode, res.StatusCode),
 		}
 	}
 

@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+
+	"github.com/mitchellh/mapstructure"
 )
 
 type TestCase interface {
@@ -12,6 +14,15 @@ type TestCase interface {
 	GetType() string
 	String() string
 	Run(context.Context) TestResult
+}
+
+type GenericTestCaseJson struct {
+	name     string
+	testType string `mapstructure:"type"`
+}
+
+type TestSuiteJson struct {
+	tests []GenericTestCaseJson
 }
 
 type TestResult struct {
@@ -36,6 +47,9 @@ func ReadTestSuiteFile(filename string) ([]TestCase, error) {
 	if !ok {
 		return nil, fmt.Errorf("Test suite file not a JSON object.")
 	}
+
+	var testSuite TestSuiteJson
+	err = mapstructure.Decode(jsonDict, &testSuite)
 
 	testCases, ok := jsonDict["tests"]
 	if !ok {

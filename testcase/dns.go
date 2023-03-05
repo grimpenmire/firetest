@@ -2,14 +2,15 @@ package testcase
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net"
+
+	"github.com/mitchellh/mapstructure"
 )
 
 type DnsTest struct {
-	name     string
-	host     string
+	Name     string
+	Host     string
 	resolver net.Resolver
 }
 
@@ -20,25 +21,18 @@ func init() {
 func parseDnsTestCase(name string, values map[string]interface{}) (TestCase, error) {
 	var testCase DnsTest
 
-	testCase.name = name
+	testCase.Name = name
 
-	host, ok := values["host"]
-	if !ok {
-		return nil, errors.New("host key not present in DNS test case.")
+	err := mapstructure.Decode(values, &testCase)
+	if err != nil {
+		return nil, err
 	}
-
-	testCase.host, ok = host.(string)
-	if !ok {
-		return nil, errors.New("host value for DNS test case is not a string")
-	}
-
-	testCase.resolver = net.Resolver{}
 
 	return &testCase, nil
 }
 
 func (m *DnsTest) GetName() string {
-	return m.name
+	return m.Name
 }
 
 func (m *DnsTest) GetType() string {
@@ -46,11 +40,11 @@ func (m *DnsTest) GetType() string {
 }
 
 func (m *DnsTest) String() string {
-	return fmt.Sprintf("dns:%s:host=%s", m.name, m.host)
+	return fmt.Sprintf("dns:%s:host=%s", m.Name, m.Host)
 }
 
 func (m *DnsTest) Run(ctx context.Context) TestResult {
-	addrs, err := m.resolver.LookupNetIP(ctx, "ip", m.host)
+	addrs, err := m.resolver.LookupNetIP(ctx, "ip", m.Host)
 	if err != nil {
 		return TestResult{
 			Success:    false,
